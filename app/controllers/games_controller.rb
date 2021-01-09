@@ -2,27 +2,30 @@ require 'open-uri'
 require 'json'
 
 class GamesController < ApplicationController
+  VOWELS = ["A", "E", "I", "O", "U"]
+
   def new
-    @letters = (0...8).map { ('A'..'Z').to_a[rand(26)]}
+    @letters = Array.new(5) { VOWELS.sample }
+    @letters += Array.new(5) { (('A'..'Z').to_a - VOWELS).sample }
+    @letters.shuffle!
   end
 
   def score
-    @result = check_word(params[:word].split)
-    @letters = (params[:word] || "").upcase
+    @letters = params[:letter]
+    @word = (params[:word] || "").upcase
     @included = included?(@word, @letters)
+    @check_word = check_word?(@word)
   end
 
   private
 
   def included?(word, letters)
     word.chars.all? { |letter| word.count(letter) <= letters.count(letter) }
-    (params[:word]).include?(params[:letter])
   end
 
-  def check_word(word)
-    url = "https://wagon-dictionary.herokuapp.com/#{word}"
-    dire = open(url).read
-    json = JSON.parse(dire)
+  def check_word?(word)
+    response = open("https://wagon-dictionary.herokuapp.com/#{word}")
+    json = JSON.parse(response.read)
     json['found']
     # json['length']
   end
